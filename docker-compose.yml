@@ -1,34 +1,35 @@
 version: "3.8"
 
 services:
-  # db:
-  #   image: postgres:12
-  #   container_name: postgres_db
-  #   restart: always
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #     POSTGRES_DB: resume_db
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
+  db:
+    image: postgres:12
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: resume_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-  # backend:
-  #   build: ./backend
-  #   ports:
-  #     - "5000:5000"
-  #   volumes:
-  #     - ./backend:/app
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_HOST=db
-  #     - POSTGRES_DB=resume_db
-  #   depends_on:
-  #     - db
-  #   command: >
-  #     sh -c "python -m spacy download en_core_web_sm && python app.py"
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=resume_db
+      - DATABASE_URL=postgresql://postgres:password@db:5432/resume_db
+    depends_on:
+      - db
+    # command: >
+    #   sh -c "python -m spacy download en_core_web_sm && python app.py"
 
   frontend:
     build: ./frontend
@@ -40,13 +41,13 @@ services:
     #   - backend
     command: npm start
 
-  # admin:
-  #     image: adminer
-  #     restart: always
-  #     depends_on:
-  #       - db
-  #     ports:
-  #      - 8080:8080
+  admin:
+      image: adminer
+      restart: always
+      depends_on:
+        - db
+      ports:
+       - 8080:8080
 
 
 volumes:
