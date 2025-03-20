@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Sticky Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 shadow-lg text-center text-2xl font-bold sticky top-0 z-10">
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 shadow-lg text-center text-2xl font-bold top-0 z-10">
         Hackathon Job Portal
       </header>
 
