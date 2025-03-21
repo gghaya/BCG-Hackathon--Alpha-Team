@@ -42,7 +42,7 @@ services:
       - ./hackathon-frontend:/app
     depends_on:
       - backend
-    # command: npm start
+    command: npm run dev
     environment:
       - CHOKIDAR_USEPOLLING=true
     networks:

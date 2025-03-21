@@ -7,15 +7,25 @@ import re
 import json
 import psycopg2
 from config import Config
-
+from models import db, candidates, job_offers
 # Initialize the Flask application
 app = Flask(__name__)
-CORS(app)  # Allow frontend to communicate with backend
+CORS(app,  origins=["http://localhost:3000","http://127.0.0.1:3000"])  # Allow frontend to communicate with backend
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/resume_db'
+db.init_app(app)
+
+# Create tables
+with app.app_context():
+    db.create_all()
+
 
 # Set up Google API Key (retrieve it securely)
 os.environ["GOOGLE_API_KEY"] = "AIzaSyCAePlqabCS1iBOlSBGSGtxKrOZ1I2lWKQ"  # Use environment variables for production
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Use environment variable for API key
 genai.configure(api_key=GOOGLE_API_KEY)
+
+
 
 # Directory for uploaded files
 UPLOAD_FOLDER = "uploads"
@@ -158,4 +168,4 @@ def upload_resume():
     return jsonify(resume_data)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
