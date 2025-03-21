@@ -39,10 +39,14 @@ export default function JobApplicationForm() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("job_offer_id", job);  // ✅ Include job_offer_id in the form data
+    formData.append("fullName", fullName);  // ✅ Include job_offer_id in the form data
+    formData.append("email", email);  // ✅ Include job_offer_id in the form data
+
   
     setLoading(true);
   
     try {
+      console.log(formData);
       const response = await fetch("http://127.0.0.1:5000/apply", {
         method: "POST",
         body: formData,
