@@ -5,10 +5,11 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the application files to the container
+COPY requirements.txt /app
+RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /app
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port that Flask runs on
 EXPOSE 5000
