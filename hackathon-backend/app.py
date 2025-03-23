@@ -8,6 +8,8 @@ import json
 import psycopg2
 from config import Config
 from models import db, candidates, job_offers
+from matchskills import match_skills_with_gemini
+from storeresume import upload_resume
 # Initialize the Flask application
 app = Flask(__name__)
 CORS(app,  origins=["http://localhost:3000","http://127.0.0.1:3000"])  # Allow frontend to communicate with backend
@@ -21,7 +23,7 @@ with app.app_context():
 
 
 # Set up Google API Key (retrieve it securely)
-os.environ["GOOGLE_API_KEY"] = "AIzaSyCAePlqabCS1iBOlSBGSGtxKrOZ1I2lWKQ"  # Use environment variables for production
+os.environ["GOOGLE_API_KEY"] = "AIzaSyD_jqJEPv2lbZHcFNjuRbLG070vzrWPh_s"  # Use environment variables for production
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Use environment variable for API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -37,6 +39,20 @@ def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = "\n".join([page.get_text("text") for page in doc])
     return text.strip()
+
+
+
+
+
+# @app.route('/apply', methods=['POST'])
+# def custom_handler():
+#     # request.data['resume'] = request.files["file"]
+#     print("Calling upload_resume inside custom_handler")
+#     response = upload_resume(request)
+#     return response
+
+
+
 
 # Extract resume data with Google Gemini
 def extract_resume_data_with_gemini(text):
@@ -80,7 +96,7 @@ def extract_resume_data_with_gemini(text):
     """
     model = genai.GenerativeModel("models/gemini-1.5-pro")
     response = model.generate_content(prompt)
-    print("🔍 Raw Model Response:", response.text)
+    # print("🔍 Raw Model Response:", response.text)
     return response.text
 
 # Extract the raw JSON from the response
@@ -103,14 +119,14 @@ def get_db_connection():
     """Connect to PostgreSQL database."""
     return psycopg2.connect(Config.DATABASE_URL)
 
-def store_candidate_data(resume_data, file_path, job_offer_id):
+def store_candidate_data(email,resume_data, fullname,resume_link, job_offer_id, missing, extra):
     """Store the resume data (as JSON) and file path in the database."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO candidates (job_offer_id, resume_data, resume_path)
-        VALUES (%s, %s, %s)
-    """, (job_offer_id, json.dumps(resume_data), file_path))
+    INSERT INTO candidates (email, job_offer_id, full_name, resume_data, resume_path, missing_skills , extra_skills)
+    VALUES (%s, %s, %s, %s,  %s, %s,  %s)
+""", (email , job_offer_id, fullname, json.dumps(resume_data), resume_link, missing ,extra))
     conn.commit()
     conn.close()
 
@@ -124,7 +140,7 @@ def get_job_offers_route():
     conn.close()
     return jsonify([{ "id": offer[0], "job_title": offer[1] } for offer in job_offers])
 
-# API route to handle resume upload
+#API route to handle resume upload
 @app.route("/apply", methods=["POST"])
 def upload_resume():
     """Handle resume upload and candidate data extraction."""
@@ -134,7 +150,9 @@ def upload_resume():
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
-    
+    fullname = request.form.get("fullName")
+    if fullname == "":
+        return jsonify({"error": "Empty name"}), 400
     # Get job_offer_id from UI
     job_offer_id = request.form.get("job_offer_id")
     if not job_offer_id:
@@ -162,10 +180,23 @@ def upload_resume():
     if not resume_data:
         return jsonify({"error": "Failed to extract resume data"}), 500
     
+    email = request.form.get("email")
+    job_description_all = db.session.get(job_offers, job_offer_id)
+    job_description = job_description_all.description
+    resume_skills = resume_data.get("skills", [])
+    print("job_description=========>", job_description)
+    print("resume_skills 888888888888 ", resume_skills)
+    missing , extra = match_skills_with_gemini(job_description, resume_skills)
+    print("extra*******" , missing)
+    resume_link = upload_resume(request)
     # Store the extracted resume data and file path in the database
-    store_candidate_data(resume_data, file_path, job_offer_id)
+    store_candidate_data(email,resume_data,fullname, resume_link, job_offer_id, json.dumps(missing) , json.dumps(extra))
     
-    return jsonify(resume_data)
+    return jsonify(resume_skills)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+
+

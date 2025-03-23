@@ -46,7 +46,9 @@ export default function JobApplicationForm() {
     setLoading(true);
   
     try {
-      console.log(formData.data);
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
       const response = await fetch("http://127.0.0.1:5000/apply", {
         method: "POST",
         body: formData,
