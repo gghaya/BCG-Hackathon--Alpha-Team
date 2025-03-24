@@ -15,50 +15,45 @@ export default function SideBar() {
 
   const isActive = (path) => location.pathname === path;
 
+  const navItems = [
+    { path: "/dashboard", icon: <FaTachometerAlt />, text: "Dashboard" },
+    { path: "/jobs", icon: <FaSuitcase />, text: "Jobs" },
+    { path: "/applicant", icon: <FaUserFriends />, text: "Applicants" }
+  ];
+
   return (
-    <div className="bg-gradient-to-b from-blue-600 to-indigo-600 text-white w-[20%] h-full p-6 flex flex-col justify-between shadow-lg">
-      {/* Top: Profile & Navigation */}
-      <div>
-        <div className="flex flex-col items-center mb-8">
+    <div className="fixed left-0 top-0 h-screen bg-gradient-to-b from-blue-600 to-indigo-600 text-white w-[20%] flex flex-col shadow-lg">
+      {/* Logo Section */}
+      <div className="pt-6 pb-8">
+        <div className="flex flex-col items-center">
           <div className="w-16 h-16 bg-white rounded-full mb-2" />
           <span className="font-semibold text-white">Ghizlane Ghaya</span>
         </div>
+      </div>
 
-        <nav className="space-y-4">
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-              isActive("/dashboard") ? "bg-yellow-400 text-black" : "hover:bg-blue-500"
-            }`}
-          >
-            <FaTachometerAlt /> Dashboard
-          </Link>
-
-          <Link
-            to="/jobs"
-            className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-              isActive("/jobs") ? "bg-yellow-400 text-black" : "hover:bg-blue-500"
-            }`}
-          >
-            <FaSuitcase /> Jobs
-          </Link>
-
-          <Link
-            to="/applicants"
-            className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-              isActive("/applicants") ? "bg-yellow-400 text-black" : "hover:bg-blue-500"
-            }`}
-          >
-            <FaUserFriends /> Applicants
-          </Link>
+      {/* Navigation - Centered */}
+      <div className="flex-1 flex items-center">
+        <nav className="w-full px-6 space-y-6">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center justify-center text-center gap-3 px-4 py-3 rounded-md text-lg transition-colors ${
+                isActive(item.path) ? "bg-yellow-400 text-black" : "hover:bg-blue-500"
+              }`}
+            >
+              <div className="w-6 flex justify-center">{item.icon}</div>
+              <span className="flex-1 text-left">{item.text}</span>
+            </Link>
+          ))}
         </nav>
       </div>
 
-      {/* Bottom: Logout */}
-      <div className="px-4">
+      {/* Logout Button */}
+      <div className="p-6">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-800 hover:bg-yellow-500 hover:text-black rounded-md w-full"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-800 hover:bg-yellow-500 hover:text-black rounded-md w-full transition-colors"
         >
           <BiLogOut /> Logout
         </button>

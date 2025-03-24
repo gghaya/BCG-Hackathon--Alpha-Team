@@ -1,81 +1,98 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SideBar from "./components/sidebar"
+import Navbar from "./components/Navbar"
 import JobApplicationForm from "./components/JobApplicationForm";
 import ApplicantListing  from "./components/applicantslisting";
+import JobListingTable from "./components/joblisting"
+// Layout component with sidebar and navbar
+const DashboardLayout = ({ children }) => (
+  <>
+    <Navbar />
+    <div className="flex flex-1">
+      <SideBar />
+      <div className="w-full pl-[20%] pt-16">
+        {children}
+      </div>
+    </div>
+  </>
+);
 
-// function App() {
-//   return (
-//     <div className="min-h-screen flex flex-col bg-gray-100">
-//       {/* Sticky Header */}
-//       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 shadow-lg text-center text-2xl font-bold top-0 z-10">
-//         Hackathon Job Portal
-//       </header>
-
-//       {/* Main content */}
-//       <main className="flex flex-1 justify-center items-center p-6">
-//         <JobApplicationForm />
-//       </main>
-
-//       {/* Footer */}
-//       <footer className="bg-gray-800 text-white text-center py-4 text-sm">
-//         &copy; 2025 Hackathon - All Rights Reserved
-//       </footer>
-//     </div>
-//   );
-// }
 function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-gray-100">
-        <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 shadow-lg text-center text-2xl font-bold top-0 z-10">
-          Hackathon Job Portal
-        </header>
-
-        <main className="flex flex-1 p-6">
+        <main className="flex flex-1">
           <Routes>
-            {/* Homepage → JobApplicationForm only */}
+            {/* Homepage without sidebar */}
             <Route
               path="/"
               element={
-                <div className="flex-1 flex justify-center items-center">
+                <div className="flex-1 flex justify-center items-center p-6">
                   <JobApplicationForm />
                 </div>
               }
             />
-            {/* SideBar page */}
+            
+            {/* Routes with sidebar */}
             <Route
               path="/admin"
               element={
-                <div className="w-4/5">
-                  <SideBar />
+                <DashboardLayout>
                   <div className="flex-1 flex justify-center items-center">
-                    <h1 className="text-2xl">Admin Panel (just SideBar here)</h1>
+                    <h1 className="text-2xl">Admin Panel</h1>
                   </div>
-                </div>
+                </DashboardLayout>
               }
             />
-              {/* SideBar page */}
-              <Route
+            
+            <Route
               path="/applicant"
               element={
-                <div className="w-4/5">
+                <DashboardLayout>
                   <ApplicantListing />
+                </DashboardLayout>
+              }
+            />
+
+            <Route
+              path="/dashboard"
+              element={
+                <DashboardLayout>
+                  <div className="flex-1 flex justify-center items-center">
+                    <h1 className="text-2xl">Dashboard</h1>
+                  </div>
+                </DashboardLayout>
+              }
+            />
+
+            <Route
+              path="/jobs"
+              element={
+                <DashboardLayout>
                   {/* <div className="flex-1 flex justify-center items-center"> */}
-                    {/* <h1 className="text-2xl">Admin Panel (just SideBar here)</h1> */}
+                    <JobListingTable/>
                   {/* </div> */}
-                </div>
+                </DashboardLayout>
+              }
+            />
+
+            <Route
+              path="/applicants"
+              element={
+                <DashboardLayout>
+                  <div className="flex-1 flex justify-center items-center">
+                    <h1 className="text-2xl">Applicants Management</h1>
+                  </div>
+                </DashboardLayout>
               }
             />
           </Routes>
         </main>
-        <footer className="bg-gray-800 text-white text-center py-4 text-sm">
-          &copy; 2025 Hackathon - All Rights Reserved
-        </footer>
       </div>
     </Router>
   );
 }
 
-// export default App;
+
 export default App;
