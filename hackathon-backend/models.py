@@ -1,6 +1,12 @@
+import enum
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
+class PriorityLevel(enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
 
 class candidates(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -12,9 +18,18 @@ class candidates(db.Model):
     resume_data = db.Column(db.JSON, nullable=True)
     missing_skills = db.Column(db.JSON, nullable=True)
     extra_skills = db.Column(db.JSON, nullable=True)
+    match_score = db.Column(db.Float, nullable=True)
     skills_score = db.Column(db.Integer, nullable=True, default=0)
 
 class job_offers(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    job_title = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(1000), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    requirements = db.Column(db.String, nullable=True)
+    responsibilities = db.Column(db.JSONB, nullable=True)
+    skills = db.Column(db.JSONB, nullable=True)
+    education = db.Column(db.String, nullable=True)
+    skillspriority = db.Column(db.Enum(PriorityLevel), nullable=True)
+    requirementspriority = db.Column(db.Enum(PriorityLevel), nullable=True)
+    educationpriority = db.Column(db.Enum(PriorityLevel), nullable=True)
+    
