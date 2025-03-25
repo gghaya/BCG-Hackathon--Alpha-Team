@@ -72,6 +72,8 @@ export default function JobApplicationForm() {
         experience: data.experience,
         education: data.education,
         skills: data.skills,
+        link : data.resume_link,
+        value: data.webViewLink
       });
       setShowModal(true);
     } catch (error) {

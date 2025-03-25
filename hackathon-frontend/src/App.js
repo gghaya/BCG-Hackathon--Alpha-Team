@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar"
 import JobApplicationForm from "./components/JobApplicationForm";
 import ApplicantListing  from "./components/applicantslisting";
 import JobListingTable from "./components/joblisting"
+import Dashboard from "./components/dashboard"
 // Layout component with sidebar and navbar
 const DashboardLayout = ({ children }) => (
   <>
@@ -59,10 +60,10 @@ function App() {
               path="/dashboard"
               element={
                 <DashboardLayout>
-                  <div className="flex-1 flex justify-center items-center">
-                    <h1 className="text-2xl">Dashboard</h1>
-                  </div>
-                </DashboardLayout>
+                {/* <div className="flex-1 flex justify-center items-center"> */}
+                  <Dashboard/>
+                {/* </div> */}
+              </DashboardLayout>   
               }
             />
 

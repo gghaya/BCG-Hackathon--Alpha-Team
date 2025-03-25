@@ -13,7 +13,10 @@ credentials = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 drive_service = build('drive', 'v3', credentials=credentials)
 
-@app.route('/upload-resume', methods=['POST'])
+# @app.route('/upload-resume', methods=['POST'])
+
+
+
 def upload_resume(request):
     # file = 
     # if 'file'  not in request.files:

@@ -10,6 +10,7 @@ from config import Config
 from models import db, candidates, job_offers
 from matchskills import match_skills_with_gemini
 from storeresume import upload_resume
+from getdata import get_all_candidates, get_job_titles , filter_candidates
 # Initialize the Flask application
 app = Flask(__name__)
 CORS(app,  origins=["http://localhost:3000","http://127.0.0.1:3000"])  # Allow frontend to communicate with backend
@@ -142,7 +143,7 @@ def get_job_offers_route():
 
 #API route to handle resume upload
 @app.route("/apply", methods=["POST"])
-def upload_resume():
+def upload_data():
     """Handle resume upload and candidate data extraction."""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -174,25 +175,40 @@ def upload_resume():
         return jsonify({"error": "Unsupported file format"}), 400
     
     # Get structured resume data from Google Gemini
-    response = extract_resume_data_with_gemini(extracted_text)
-    resume_data = extract_json_from_response(response)
+    #response = extract_resume_data_with_gemini(extracted_text)
+    #resume_data = extract_json_from_response(response)
     
-    if not resume_data:
-        return jsonify({"error": "Failed to extract resume data"}), 500
+    #if not resume_data:
+       # return jsonify({"error": "Failed to extract resume data"}), 500
     
     email = request.form.get("email")
     job_description_all = db.session.get(job_offers, job_offer_id)
     job_description = job_description_all.description
-    resume_skills = resume_data.get("skills", [])
+    #resume_skills = resume_data.get("skills", [])
     print("job_description=========>", job_description)
-    print("resume_skills 888888888888 ", resume_skills)
-    missing , extra = match_skills_with_gemini(job_description, resume_skills)
-    print("extra*******" , missing)
+    # print("resume_skills 888888888888 ", resume_skills)
+   # missing , extra = match_skills_with_gemini(job_description, resume_skills)
+    #print("extra*******" , missing)
     resume_link = upload_resume(request)
     # Store the extracted resume data and file path in the database
-    store_candidate_data(email,resume_data,fullname, resume_link, job_offer_id, json.dumps(missing) , json.dumps(extra))
+    #store_candidate_data(email,resume_data,fullname, resume_link, job_offer_id, json.dumps(missing) , json.dumps(extra))
     
-    return jsonify(resume_skills)
+    return jsonify(resume_link)
+
+
+
+
+#///////////////////////////////////////////////////////
+@app.route('/api/candidates', methods=['GET'])
+def handel_candidates():
+    return(get_all_candidates(request))
+@app.route('/api/job_titles', methods=['GET'])
+def handel_jobtitles():
+    return(get_job_titles(request))
+
+@app.route('/api/candidates/filter', methods=['GET'])
+def handel_filtercandidates():
+    return(filter_candidates(request))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
