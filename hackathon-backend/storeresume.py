@@ -18,10 +18,6 @@ drive_service = build('drive', 'v3', credentials=credentials)
 
 
 def upload_resume(request):
-    # file = 
-    # if 'file'  not in request.files:
-    #     return jsonify({'error': 'No file uploaded'}), 400
-
     file = request.files.get('resume') or request.files.get('file')
 
     # Save to temp location
@@ -41,9 +37,9 @@ def upload_resume(request):
     # Optional: Make file public
     drive_service.permissions().create(
         fileId=uploaded_file['id'],
-        body={'type': 'anyone', 'role': 'reader'}
+        body={'type': 'anyone', 'role': 'reader'},
     ).execute()
-
     os.remove(tmp_path)
+    download_link = f"https://drive.google.com/uc?export=download&id={uploaded_file['id']}"
     print('file_id', uploaded_file['id'], 'view_link',  uploaded_file['webViewLink'])
-    return uploaded_file['webViewLink']
+    return download_link
