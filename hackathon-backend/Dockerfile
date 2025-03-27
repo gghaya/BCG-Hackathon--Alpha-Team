@@ -6,7 +6,10 @@ WORKDIR /app
 
 # Copy the application files to the container
 COPY requirements.txt /app
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --default-timeout=300 --retries=10 --no-cache-dir -r requirements.txt
 COPY . /app
 
 # Install dependencies

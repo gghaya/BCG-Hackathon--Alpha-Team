@@ -6,7 +6,7 @@ from psycopg2 import sql
 
 # Create a simple app for context
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/resume_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/resume'
 
 # Direct PostgreSQL connection for running ALTER TABLE commands
 def run_alter_tables():
@@ -14,7 +14,7 @@ def run_alter_tables():
         dbname="resume_db",
         user="user",
         password="password",
-        host="db"
+        host="localhost"
     )
     conn.autocommit = True
     cursor = conn.cursor()

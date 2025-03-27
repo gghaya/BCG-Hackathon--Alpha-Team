@@ -27,9 +27,9 @@ CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://127
 # Configure database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@db:5432/resume_db')
 db.init_app(app)
-
+# print("00000000000000000000000")
 # Create tables
-with app.app_context():
+def create_tables():
     db.create_all()
 
 # Set up Google API Key
@@ -191,6 +191,7 @@ def upload_resume_route():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     
+    
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
@@ -212,7 +213,7 @@ def upload_resume_route():
     # Save the uploaded file
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
-    
+    resume_link = upload_resume(file.filename,file_path)
     # Extract text from PDF
     if file.filename.endswith(".pdf"):
         extracted_text = extract_text_from_pdf(file_path)
@@ -240,7 +241,6 @@ def upload_resume_route():
     missing, extra = match_skills_with_gemini(job_description, resume_skills)
     
     # Upload resume to storage (Google Drive)
-    resume_link = upload_resume(request)
     
     # Calculate skill score
     total_skills = len(resume_skills) + len(missing)
