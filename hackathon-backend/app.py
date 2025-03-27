@@ -11,17 +11,18 @@ from datetime import datetime, date
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import Config
-from models import db, candidates, job_offers, User
+from models import db, candidates, job_offers, User, PriorityLevel
 from matchskills import match_skills_with_gemini
 from storeresume import upload_resume
 from auth import token_required, recruiter_required, generate_token
+from scoring import calculate_candidate_score
 
 # Load environment variables
 load_dotenv()
 
 # Initialize the Flask application
 app = Flask(__name__)
-CORS(app,  origins=["http://localhost:3000","http://127.0.0.1:3000"])
+CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"])
 
 # Configure database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@db:5432/resume_db')
@@ -288,7 +289,14 @@ def get_job_offers_route():
             "closing_date": offer.closing_date.isoformat() if offer.closing_date else None,
             "publish_date": offer.publish_date.isoformat() if offer.publish_date else None,
             "reference_number": offer.reference_number,
-            "number_of_positions": offer.number_of_positions
+            "number_of_positions": offer.number_of_positions,
+            "requirements": offer.requirements,
+            "responsibilities": offer.responsibilities,
+            "skills": offer.skills,
+            "education": offer.education,
+            "skills_priority": offer.skills_priority.value if offer.skills_priority else "medium",
+            "requirements_priority": offer.requirements_priority.value if offer.requirements_priority else "medium",
+            "education_priority": offer.education_priority.value if offer.education_priority else "medium"
         } for offer in job_offers_list])
     except Exception as e:
         print(f"Error fetching job offers: {e}")
@@ -298,7 +306,7 @@ def get_job_offers_route():
 @token_required
 @recruiter_required
 def create_job_offer():
-    """Create a new job offer."""
+    """Create a new job offer with structured fields and priority weights."""
     data = request.get_json()
     
     # Validate required fields
@@ -313,6 +321,19 @@ def create_job_offer():
         except ValueError:
             return jsonify({"error": "Invalid closing date format. Use YYYY-MM-DD"}), 400
     
+    # Parse priority levels
+    skills_priority = PriorityLevel.MEDIUM
+    if data.get('skills_priority') in [p.value for p in PriorityLevel]:
+        skills_priority = PriorityLevel(data['skills_priority'])
+        
+    requirements_priority = PriorityLevel.MEDIUM
+    if data.get('requirements_priority') in [p.value for p in PriorityLevel]:
+        requirements_priority = PriorityLevel(data['requirements_priority'])
+        
+    education_priority = PriorityLevel.MEDIUM
+    if data.get('education_priority') in [p.value for p in PriorityLevel]:
+        education_priority = PriorityLevel(data['education_priority'])
+    
     # Create new job offer
     new_job = job_offers(
         job_title=data['job_title'],
@@ -321,7 +342,18 @@ def create_job_offer():
         closing_date=closing_date,
         number_of_positions=data.get('number_of_positions', 1),
         publish_date=date.today(),
-        reference_number=data.get('reference_number')
+        reference_number=data.get('reference_number'),
+        
+        # New structured fields
+        requirements=data.get('requirements'),
+        responsibilities=data.get('responsibilities'),
+        skills=data.get('skills'),
+        education=data.get('education'),
+        
+        # Priority weights
+        skills_priority=skills_priority,
+        requirements_priority=requirements_priority,
+        education_priority=education_priority
     )
     
     db.session.add(new_job)
@@ -334,7 +366,14 @@ def create_job_offer():
         "closing_date": new_job.closing_date.isoformat() if new_job.closing_date else None,
         "publish_date": new_job.publish_date.isoformat() if new_job.publish_date else None,
         "reference_number": new_job.reference_number,
-        "number_of_positions": new_job.number_of_positions
+        "number_of_positions": new_job.number_of_positions,
+        "requirements": new_job.requirements,
+        "responsibilities": new_job.responsibilities,
+        "skills": new_job.skills,
+        "education": new_job.education,
+        "skills_priority": new_job.skills_priority.value if new_job.skills_priority else None,
+        "requirements_priority": new_job.requirements_priority.value if new_job.requirements_priority else None,
+        "education_priority": new_job.education_priority.value if new_job.education_priority else None
     }), 201
 
 @app.route("/api/job_offers/<int:job_id>", methods=["PUT"])
@@ -368,6 +407,29 @@ def update_job_offer(job_id):
     if data.get('reference_number'):
         job.reference_number = data['reference_number']
     
+    # Update new fields if provided
+    if data.get('requirements'):
+        job.requirements = data['requirements']
+    
+    if data.get('responsibilities'):
+        job.responsibilities = data['responsibilities']
+    
+    if data.get('skills'):
+        job.skills = data['skills']
+    
+    if data.get('education'):
+        job.education = data['education']
+    
+    # Update priorities if provided
+    if data.get('skills_priority') in [p.value for p in PriorityLevel]:
+        job.skills_priority = PriorityLevel(data['skills_priority'])
+    
+    if data.get('requirements_priority') in [p.value for p in PriorityLevel]:
+        job.requirements_priority = PriorityLevel(data['requirements_priority'])
+    
+    if data.get('education_priority') in [p.value for p in PriorityLevel]:
+        job.education_priority = PriorityLevel(data['education_priority'])
+    
     db.session.commit()
     
     return jsonify({
@@ -377,7 +439,14 @@ def update_job_offer(job_id):
         "closing_date": job.closing_date.isoformat() if job.closing_date else None,
         "publish_date": job.publish_date.isoformat() if job.publish_date else None,
         "reference_number": job.reference_number,
-        "number_of_positions": job.number_of_positions
+        "number_of_positions": job.number_of_positions,
+        "requirements": job.requirements,
+        "responsibilities": job.responsibilities,
+        "skills": job.skills,
+        "education": job.education,
+        "skills_priority": job.skills_priority.value if job.skills_priority else None,
+        "requirements_priority": job.requirements_priority.value if job.requirements_priority else None,
+        "education_priority": job.education_priority.value if job.education_priority else None
     }), 200
 
 @app.route("/api/job_offers/<int:job_id>", methods=["DELETE"])
@@ -395,11 +464,134 @@ def delete_job_offer(job_id):
     
     return jsonify({"message": "Job offer deleted successfully"}), 200
 
+@app.route("/api/score_candidate", methods=["POST"])
+@token_required
+@recruiter_required
+def score_candidate():
+    """Score a candidate against a job posting."""
+    data = request.get_json()
+    
+    # Validate required fields
+    if not data or not data.get('candidate_id') or not data.get('job_id'):
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    try:
+        # Get candidate and job data
+        candidate = candidates.query.get(data['candidate_id'])
+        job = job_offers.query.get(data['job_id'])
+        
+        if not candidate or not job:
+            return jsonify({"error": "Candidate or job not found"}), 404
+        
+        # Calculate score
+        score_results = calculate_candidate_score(
+            candidate.resume_data,
+            {
+                "skills": job.skills,
+                "requirements": job.requirements,
+                "responsibilities": job.responsibilities,
+                "education": job.education,
+                "skills_priority": job.skills_priority,
+                "requirements_priority": job.requirements_priority,
+                "education_priority": job.education_priority
+            },
+            GOOGLE_API_KEY
+        )
+        
+        # Update candidate scores in database
+        candidate.skills_score = score_results['skills_score']
+        candidate.requirements_score = score_results['requirements_score']
+        candidate.education_score = score_results['education_score']
+        candidate.overall_score = score_results['overall_score']
+        candidate.missing_skills = score_results['missing_skills']
+        candidate.extra_skills = score_results['extra_skills']
+        
+        db.session.commit()
+        
+        return jsonify({
+            "candidate_id": candidate.id,
+            "job_id": job.id,
+            "scores": score_results
+        })
+        
+    except Exception as e:
+        print(f"Error scoring candidate: {e}")
+        return jsonify({"error": "Failed to calculate score"}), 500
+
+@app.route("/api/score_all_candidates/<int:job_id>", methods=["POST"])
+@token_required
+@recruiter_required
+def score_all_candidates(job_id):
+    """Score all candidates for a specific job."""
+    try:
+        # Get job data
+        job = job_offers.query.get(job_id)
+        
+        if not job:
+            return jsonify({"error": "Job not found"}), 404
+        
+        # Get all candidates for this job
+        job_candidates = candidates.query.filter_by(job_offer_id=job_id).all()
+        
+        if not job_candidates:
+            return jsonify({"message": "No candidates found for this job"}), 200
+        
+        # Prepare job data once
+        job_data = {
+            "skills": job.skills,
+            "requirements": job.requirements,
+            "responsibilities": job.responsibilities,
+            "education": job.education,
+            "skills_priority": job.skills_priority,
+            "requirements_priority": job.requirements_priority,
+            "education_priority": job.education_priority
+        }
+        
+        # Score each candidate
+        results = []
+        for candidate in job_candidates:
+            score_results = calculate_candidate_score(
+                candidate.resume_data,
+                job_data,
+                GOOGLE_API_KEY
+            )
+            
+            # Update candidate scores in database
+            candidate.skills_score = score_results['skills_score']
+            candidate.requirements_score = score_results['requirements_score']
+            candidate.education_score = score_results['education_score']
+            candidate.overall_score = score_results['overall_score']
+            candidate.missing_skills = score_results['missing_skills']
+            candidate.extra_skills = score_results['extra_skills']
+            
+            results.append({
+                "candidate_id": candidate.id,
+                "name": candidate.full_name,
+                "email": candidate.email,
+                "overall_score": score_results['overall_score']
+            })
+        
+        # Commit all updates
+        db.session.commit()
+        
+        # Sort results by score (highest first)
+        results.sort(key=lambda x: x['overall_score'], reverse=True)
+        
+        return jsonify({
+            "job_id": job_id,
+            "candidates_scored": len(results),
+            "results": results
+        })
+        
+    except Exception as e:
+        print(f"Error scoring candidates: {e}")
+        return jsonify({"error": "Failed to calculate scores"}), 500
+
 @app.route("/api/applicants", methods=["GET"])
 @token_required
 @recruiter_required
 def get_applicants():
-    """Get all applicants with optional filtering."""
+    """Get all applicants with optional filtering and detailed scoring."""
     try:
         query = candidates.query
         
@@ -432,14 +624,7 @@ def get_applicants():
             if applicant.missing_skills:
                 missing_skills = json.loads(applicant.missing_skills) if isinstance(applicant.missing_skills, str) else applicant.missing_skills
             
-            # Calculate skill score (could be enhanced with more sophisticated algorithm)
-            skill_score = applicant.skills_score or 0
-            if skill_score == 0 and skills and missing_skills:
-                # Simple calculation based on missing skills
-                total_skills = len(skills) + len(missing_skills)
-                if total_skills > 0:
-                    skill_score = round((len(skills) / total_skills) * 100)
-            
+            # Include detailed scores in the response
             result.append({
                 "id": applicant.id,
                 "fullName": applicant.full_name,
@@ -448,9 +633,18 @@ def get_applicants():
                 "jobId": applicant.job_offer_id,
                 "resumePath": applicant.resume_path,
                 "missingSkills": missing_skills,
-                "skillScore": f"{skill_score}%",
+                "skills": skills,
+                "scores": {
+                    "overall": f"{applicant.overall_score:.1f}" if applicant.overall_score else "0.0",
+                    "skills": applicant.skills_score or 0,
+                    "requirements": applicant.requirements_score or 0,
+                    "education": applicant.education_score or 0
+                },
                 "rating": 0  # This could be added as a feature later
             })
+        
+        # Sort by overall score (highest first)
+        result.sort(key=lambda x: float(x['scores']['overall']) if x['scores']['overall'] else 0, reverse=True)
         
         return jsonify(result)
     
@@ -490,7 +684,12 @@ def get_applicant(applicant_id):
         "resumeData": resume_data,
         "missingSkills": missing_skills,
         "extraSkills": extra_skills,
-        "skillScore": applicant.skills_score or 0
+        "scores": {
+            "overall": f"{applicant.overall_score:.1f}" if applicant.overall_score else "0.0",
+            "skills": applicant.skills_score or 0,
+            "requirements": applicant.requirements_score or 0,
+            "education": applicant.education_score or 0
+        }
     }), 200
 
 if __name__ == "__main__":
