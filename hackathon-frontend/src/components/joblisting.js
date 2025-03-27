@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { format } from 'date-fns';
 import authService from '../services/authService';
+import { FaSearch } from 'react-icons/fa';
 
 export default function JobListingTable() {
   const [showJobModal, setShowJobModal] = useState(false);
@@ -11,6 +12,9 @@ export default function JobListingTable() {
   const [error, setError] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   
+  const [filter, setFilter] = useState({
+    search:"",
+  });
   // Form state for adding new job
   const [formData, setFormData] = useState({
     job_title: '',
@@ -287,9 +291,39 @@ export default function JobListingTable() {
     }
     return options;
   };
-  
+  const filteredJobs = jobListings.filter((job) => {
+    const search = filter.search.toLowerCase();
+    return (
+      job.job_title?.toLowerCase().includes(search) ||
+      job.reference_number?.toLowerCase().includes(search) ||
+      job.skills?.some(skill =>
+        skill.toLowerCase().includes(search)
+      )
+    );
+  });
   return (
     <div className="p-4">
+      <nav className="bg-white shadow-sm fixed top-0 left-[20%] right-0 z-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-between">
+          {/* Search Bar */}
+          <div className="flex-1">
+            <form  className="relative">
+              <input
+                type="text"
+                value={filter.search}
+                onChange={(e) =>
+                  setFilter({ ...filter, search: e.target.value })
+                }              
+                placeholder="Search..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Job Listings</h2>
         <div className="flex gap-2">
@@ -322,14 +356,14 @@ export default function JobListingTable() {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {jobListings.length === 0 ? (
+              {filteredJobs.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-3 text-center text-gray-500">
                     No job listings found. Add your first job listing!
                   </td>
                 </tr>
               ) : (
-                jobListings.map((job) => (
+                filteredJobs.map((job) => (
                   <tr key={job.id} className="border-t hover:bg-gray-50">
                     <td className="p-3 font-medium text-blue-600 hover:underline cursor-pointer">
                       {job.job_title}

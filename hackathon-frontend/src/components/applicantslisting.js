@@ -3,8 +3,19 @@ import { FaFilter } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import ApplicantCard from "./ApplicantCard";
 import authService from "../services/authService";
+import { FaSearch } from 'react-icons/fa';
 
 const ApplicantListing = () => {
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // const handleSearch = (e) => {
+  //   e.preventDefault();
+  //   // Implement search functionality here
+  //   console.log('Searching for:', searchQuery);
+  // };
+
+
   const [applicants, setApplicants] = useState([]);
   const [showFilter, setShowFilter] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -12,8 +23,13 @@ const ApplicantListing = () => {
   const [filter, setFilter] = useState({
     jobId: "",
     minScore: "",
-    status: ""
+    status: "",
+    search:"",
   });
+
+
+  const [minScore, setMinScore] = useState(60);
+  const [selectedJob, setSelectedJob] = useState('');
 
   useEffect(() => {
     fetchApplicants();
@@ -55,7 +71,8 @@ const ApplicantListing = () => {
     // Filter based on selected criteria
     return applicants.filter(applicant => {
       // Filter by job ID if selected
-      if (filter.jobId && applicant.jobId !== parseInt(filter.jobId)) {
+      if (filter.jobId && applicant.jobTitle.trim() !== filter.jobId.trim()) {
+        console.log("|",filter.jobId,"|", applicant.jobTitle,"|" )
         return false;
       }
       
@@ -67,6 +84,18 @@ const ApplicantListing = () => {
         }
       }
       
+      if (filter.search)
+        {
+          if (applicant.fullName.includes(filter.search) == false)
+          {
+            if (applicant.email.includes(filter.search) == false)
+            {
+              if (applicant.jobTitle.includes(filter.search) == false)
+                return false;
+            }
+          }   
+            // return false;
+        }
       return true;
     });
   };
@@ -115,7 +144,30 @@ const ApplicantListing = () => {
   }
 
   return (
+      
     <div className="h-full flex flex-col bg-[#F8FAFC] p-6">
+      <nav className="bg-white shadow-sm fixed top-0 left-[20%] right-0 z-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-between">
+          {/* Search Bar */}
+          <div className="flex-1">
+            <form  className="relative">
+              <input
+                type="text"
+                name="search"
+                // value={searchQuery}
+                // onChange={(e) => setSearchQuery(e.target.value)}
+                value={filter.search} 
+                onChange={handleFilterChange} 
+                placeholder="Search..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Applicants ({filteredApplicants.length})</h2>
         <div className="flex items-center gap-2">
@@ -148,14 +200,14 @@ const ApplicantListing = () => {
           
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Job ID</label>
+              <label className="block text-sm font-medium text-gray-700">Job Title</label>
               <input 
                 type="text" 
                 name="jobId" 
                 value={filter.jobId} 
                 onChange={handleFilterChange} 
                 className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm"
-                placeholder="Enter job ID"
+                placeholder="Enter job Title"
               />
             </div>
             
@@ -173,6 +225,11 @@ const ApplicantListing = () => {
                 <option value="70">70% and above</option>
                 <option value="60">60% and above</option>
                 <option value="50">50% and above</option>
+                <option value="40">40% and above</option>
+                <option value="30">30% and above</option>
+                <option value="20">20% and above</option>
+                <option value="10">10% and above</option>
+
               </select>
             </div>
           </div>

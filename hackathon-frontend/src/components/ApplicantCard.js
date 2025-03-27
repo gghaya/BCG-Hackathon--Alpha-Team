@@ -9,6 +9,7 @@ const ApplicantCard = ({ applicant, onScoreClick }) => {
     return 'bg-red-100 text-red-700';
   };
 
+
   // Convert score to number for color calculation
   const overallScore = parseFloat(applicant.scores?.overall || '0');
   const scoreColorClass = getScoreColor(overallScore);

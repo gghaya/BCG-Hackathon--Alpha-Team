@@ -14,7 +14,7 @@ import Dashboard from "./components/Dashboard";
 // Layout component with sidebar and navbar
 const DashboardLayout = ({ children }) => (
   <>
-    <Navbar />
+    {/* <Navbar /> */}
     <div className="flex flex-1">
       <SideBar />
       <div className="w-full pl-[20%] pt-16">
@@ -90,11 +90,11 @@ function App() {
               <Route
                 path="/applicants"
                 element={
-                  <DashboardLayout>
+                  // <DashboardLayout>
                     <div className="flex-1 flex justify-center items-center">
                       <h1 className="text-2xl">Applicants Management</h1>
                     </div>
-                  </DashboardLayout>
+                  // </DashboardLayout>
                 }
               />
             </Route>
