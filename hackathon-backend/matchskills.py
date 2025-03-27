@@ -99,7 +99,7 @@ Return only this JSON format:
         return parsed.get("missing_skills", []), parsed.get("extra_skills", [])
     except Exception as e:
         print("⚠️ JSON Parse Failed:", e)
-        return {}
+        return [], []
 
 test_description = """Au sein des équipes R&D Produits et CloudOps IT, le développeur a pour mission de concevoir, développer et maintenir des applications logicielles en utilisant lesmeilleures pratiques de programmation. Il doit collaborer avec les équipes pourassurer la qualité, la performance et la livraison efficace des projets, autour d’une sonde d'analyse de trafic IP.
 

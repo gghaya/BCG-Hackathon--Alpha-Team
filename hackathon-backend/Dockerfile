@@ -7,8 +7,6 @@ WORKDIR /app
 # Copy the application files to the container
 COPY requirements.txt /app
 RUN pip install --upgrade pip && pip install -r requirements.txt
-# Explicitly install these packages to be sure
-RUN pip install python-dotenv flask-jwt-extended PyJWT
 COPY . /app
 
 # Install dependencies

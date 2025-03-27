@@ -4,18 +4,32 @@ import authService from '../services/authService';
 
 export default function JobListingTable() {
   const [showJobModal, setShowJobModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
   
   // Form state for adding new job
   const [formData, setFormData] = useState({
     job_title: '',
     description: '',
+    requirements: '',
+    responsibilities: [],
+    skills: [],
+    education: '',
+    skills_priority: 'medium',
+    requirements_priority: 'medium',
+    education_priority: 'medium',
     closing_date: '',
     number_of_positions: 1,
     reference_number: ''
   });
+
+  // State for skill input
+  const [newSkill, setNewSkill] = useState('');
+  const [newResponsibility, setNewResponsibility] = useState('');
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -23,6 +37,48 @@ export default function JobListingTable() {
     setFormData({
       ...formData,
       [name]: type === 'number' ? parseInt(value) : value
+    });
+  };
+
+  // Handle adding a new skill
+  const handleAddSkill = () => {
+    if (newSkill.trim()) {
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, newSkill.trim()]
+      });
+      setNewSkill('');
+    }
+  };
+
+  // Handle removing a skill
+  const handleRemoveSkill = (index) => {
+    const updatedSkills = [...formData.skills];
+    updatedSkills.splice(index, 1);
+    setFormData({
+      ...formData,
+      skills: updatedSkills
+    });
+  };
+
+  // Handle adding a new responsibility
+  const handleAddResponsibility = () => {
+    if (newResponsibility.trim()) {
+      setFormData({
+        ...formData,
+        responsibilities: [...formData.responsibilities, newResponsibility.trim()]
+      });
+      setNewResponsibility('');
+    }
+  };
+
+  // Handle removing a responsibility
+  const handleRemoveResponsibility = (index) => {
+    const updatedResponsibilities = [...formData.responsibilities];
+    updatedResponsibilities.splice(index, 1);
+    setFormData({
+      ...formData,
+      responsibilities: updatedResponsibilities
     });
   };
 
@@ -59,6 +115,7 @@ export default function JobListingTable() {
     e.preventDefault();
     
     try {
+      setModalLoading(true);
       const response = await fetch('http://localhost:5000/api/job_offers', {
         method: 'POST',
         headers: {
@@ -81,6 +138,13 @@ export default function JobListingTable() {
       setFormData({
         job_title: '',
         description: '',
+        requirements: '',
+        responsibilities: [],
+        skills: [],
+        education: '',
+        skills_priority: 'medium',
+        requirements_priority: 'medium',
+        education_priority: 'medium',
         closing_date: '',
         number_of_positions: 1,
         reference_number: ''
@@ -89,6 +153,81 @@ export default function JobListingTable() {
     } catch (err) {
       console.error('Error creating job:', err);
       alert(err.message);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  // Handle editing a job
+  const handleEditJob = (job) => {
+    setEditingJob(job);
+    setFormData({
+      job_title: job.job_title,
+      description: job.description,
+      requirements: job.requirements || '',
+      responsibilities: job.responsibilities || [],
+      skills: job.skills || [],
+      education: job.education || '',
+      skills_priority: job.skills_priority || 'medium',
+      requirements_priority: job.requirements_priority || 'medium',
+      education_priority: job.education_priority || 'medium',
+      closing_date: job.closing_date || '',
+      number_of_positions: job.number_of_positions || 1,
+      reference_number: job.reference_number || ''
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle updating a job
+  const handleUpdateJob = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setModalLoading(true);
+      const response = await fetch(`http://localhost:5000/api/job_offers/${editingJob.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authService.authHeader()
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update job listing');
+      }
+      
+      const updatedJob = await response.json();
+      
+      // Update job in the list
+      setJobListings(jobListings.map(job => 
+        job.id === updatedJob.id ? updatedJob : job
+      ));
+      
+      // Reset form and close modal
+      setEditingJob(null);
+      setShowEditModal(false);
+      
+      // Reset form
+      setFormData({
+        job_title: '',
+        description: '',
+        requirements: '',
+        responsibilities: [],
+        skills: [],
+        education: '',
+        skills_priority: 'medium',
+        requirements_priority: 'medium',
+        education_priority: 'medium',
+        closing_date: '',
+        number_of_positions: 1,
+        reference_number: ''
+      });
+    } catch (err) {
+      console.error('Error updating job:', err);
+      alert(err.message);
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -114,6 +253,28 @@ export default function JobListingTable() {
       setJobListings(jobListings.filter(job => job.id !== jobId));
     } catch (err) {
       console.error('Error deleting job:', err);
+      alert(err.message);
+    }
+  };
+
+  // Handle scoring all candidates for a job
+  const handleScoreAllCandidates = async (jobId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/score_all_candidates/${jobId}`, {
+        method: 'POST',
+        headers: {
+          ...authService.authHeader()
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to score candidates');
+      }
+      
+      const result = await response.json();
+      alert(`Successfully scored ${result.candidates_scored} candidates for this job.`);
+    } catch (err) {
+      console.error('Error scoring candidates:', err);
       alert(err.message);
     }
   };
@@ -154,7 +315,7 @@ export default function JobListingTable() {
               <tr>
                 <th className="p-3 text-left">Job Title</th>
                 <th className="p-3 text-left">Reference #</th>
-                <th className="p-3 text-left">Applicants</th>
+                <th className="p-3 text-left">Skills</th>
                 <th className="p-3 text-left">Publish Date</th>
                 <th className="p-3 text-left">Closing Date</th>
                 <th className="p-3 text-center">Actions</th>
@@ -174,7 +335,20 @@ export default function JobListingTable() {
                       {job.job_title}
                     </td>
                     <td className="p-3">{job.reference_number || '-'}</td>
-                    <td className="p-3">0</td> {/* This would need a backend count */}
+                    <td className="p-3">
+                      {job.skills ? (
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(job.skills) && job.skills.slice(0, 3).map((skill, idx) => (
+                            <span key={idx} className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {Array.isArray(job.skills) && job.skills.length > 3 && (
+                            <span className="text-gray-500 text-xs">+{job.skills.length - 3} more</span>
+                          )}
+                        </div>
+                      ) : "-"}
+                    </td>
                     <td className="p-3">
                       {job.publish_date ? format(new Date(job.publish_date), 'yyyy-MM-dd') : '-'}
                     </td>
@@ -182,10 +356,24 @@ export default function JobListingTable() {
                       {job.closing_date ? format(new Date(job.closing_date), 'yyyy-MM-dd') : '-'}
                     </td>
                     <td className="p-3 text-center space-x-2">
-                      <button className="text-blue-500 hover:text-blue-700">✎</button>
+                      <button 
+                        className="text-green-500 hover:text-green-700"
+                        onClick={() => handleScoreAllCandidates(job.id)}
+                        title="Score all candidates"
+                      >
+                        📊
+                      </button>
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => handleEditJob(job)}
+                        title="Edit job"
+                      >
+                        ✎
+                      </button>
                       <button 
                         className="text-red-500 hover:text-red-700"
                         onClick={() => handleDeleteJob(job.id)}
+                        title="Delete job"
                       >
                         🗑
                       </button>
@@ -201,7 +389,7 @@ export default function JobListingTable() {
       {/* Job Add Modal */}
       {showJobModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-lg w-full max-w-xl p-6">
+          <div className="bg-white rounded shadow-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="mb-4">
               <h3 className="text-xl font-semibold text-center">Add Job Listing</h3>
               <p className="text-gray-600 text-sm mt-2 text-center">
@@ -210,8 +398,9 @@ export default function JobListingTable() {
             </div>
 
             <form className="space-y-4" onSubmit={handleCreateJob}>
+              {/* Basic Job Information */}
               <div>
-                <label className="text-sm font-medium">Job Title</label>
+                <label className="text-sm font-medium">Job Title*</label>
                 <input 
                   type="text" 
                   name="job_title"
@@ -221,8 +410,9 @@ export default function JobListingTable() {
                   required
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">Job Description</label>
+                <label className="text-sm font-medium">Job Description*</label>
                 <textarea 
                   name="description"
                   value={formData.description}
@@ -232,16 +422,181 @@ export default function JobListingTable() {
                   required
                 ></textarea>
               </div>
+              
+              {/* Requirements */}
               <div>
-                <label className="text-sm font-medium">Reference Number (Optional)</label>
-                <input 
-                  type="text" 
-                  name="reference_number"
-                  value={formData.reference_number}
+                <label className="text-sm font-medium">Requirements</label>
+                <textarea 
+                  name="requirements"
+                  value={formData.requirements}
                   onChange={handleInputChange}
                   className="w-full border p-2 rounded mt-1" 
-                />
+                  rows={3}
+                  placeholder="List job requirements here..."
+                ></textarea>
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="requirements_priority"
+                    value={formData.requirements_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
               </div>
+              
+              {/* Responsibilities */}
+              <div>
+                <label className="text-sm font-medium">Responsibilities</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newResponsibility}
+                    onChange={(e) => setNewResponsibility(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a responsibility"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddResponsibility}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.responsibilities.length > 0 && (
+                  <ul className="mt-2 space-y-1 pl-5 list-disc">
+                    {formData.responsibilities.map((resp, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{resp}</span>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveResponsibility(index)}
+                          className="text-red-500 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              
+              {/* Skills */}
+              <div>
+                <label className="text-sm font-medium">Skills</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a skill"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddSkill}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.skills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center"
+                      >
+                        {skill}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveSkill(index)}
+                          className="ml-1 text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="skills_priority"
+                    value={formData.skills_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Education */}
+              <div>
+                <label className="text-sm font-medium">Education Requirements</label>
+                <input 
+                  type="text" 
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1"
+                  placeholder="e.g., Bachelor's degree in Computer Science"
+                />
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="education_priority"
+                    value={formData.education_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Additional Job Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Reference Number</label>
+                  <input 
+                    type="text" 
+                    name="reference_number"
+                    value={formData.reference_number}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Number of Positions</label>
+                  <input 
+                    type="number" 
+                    name="number_of_positions"
+                    value={formData.number_of_positions}
+                    onChange={handleInputChange}
+                    min="1"
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+              </div>
+              
               <div>
                 <label className="text-sm font-medium">Closing Date</label>
                 <input 
@@ -252,37 +607,271 @@ export default function JobListingTable() {
                   className="w-full border p-2 rounded mt-1" 
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Number of Positions</label>
-                <select 
-                  name="number_of_positions"
-                  value={formData.number_of_positions}
-                  onChange={handleInputChange}
-                  className="w-full border p-2 rounded mt-1"
-                >
-                  {generatePostOptions()}
-                </select>
-              </div>
 
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
                   onClick={() => setShowJobModal(false)}
                   className="px-4 py-2 border rounded hover:bg-gray-100"
+                  disabled={modalLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={modalLoading}
                 >
-                  Save
+                  {modalLoading ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Job Edit Modal */}
+      {showEditModal && editingJob && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-center">Edit Job Listing</h3>
+              <p className="text-gray-600 text-sm mt-2 text-center">
+                Update the job details below.
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleUpdateJob}>
+              {/* Basic Job Information */}
+              <div>
+                <label className="text-sm font-medium">Job Title*</label>
+                <input 
+                  type="text" 
+                  name="job_title"
+                  value={formData.job_title}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Job Description*</label>
+                <textarea 
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={4}
+                  required
+                ></textarea>
+              </div>
+              
+              {/* Requirements */}
+              <div>
+                <label className="text-sm font-medium">Requirements</label>
+                <textarea 
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={3}
+                  placeholder="List job requirements here..."
+                ></textarea>
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="requirements_priority"
+                    value={formData.requirements_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Responsibilities */}
+              <div>
+                <label className="text-sm font-medium">Responsibilities</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newResponsibility}
+                    onChange={(e) => setNewResponsibility(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a responsibility"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddResponsibility}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.responsibilities.length > 0 && (
+                  <ul className="mt-2 space-y-1 pl-5 list-disc">
+                    {formData.responsibilities.map((resp, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{resp}</span>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveResponsibility(index)}
+                          className="text-red-500 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              
+              {/* Skills */}
+              <div>
+                <label className="text-sm font-medium">Skills</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a skill"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddSkill}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.skills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center"
+                      >
+                        {skill}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveSkill(index)}
+                          className="ml-1 text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="skills_priority"
+                    value={formData.skills_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Education */}
+              <div>
+                <label className="text-sm font-medium">Education Requirements</label>
+                <input 
+                  type="text" 
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1"
+                  placeholder="e.g., Bachelor's degree in Computer Science"
+                />
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="education_priority"
+                    value={formData.education_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Additional Job Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Reference Number</label>
+                  <input 
+                    type="text" 
+                    name="reference_number"
+                    value={formData.reference_number}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Number of Positions</label>
+                  <input 
+                    type="number" 
+                    name="number_of_positions"
+                    value={formData.number_of_positions}
+                    onChange={handleInputChange}
+                    min="1"
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Closing Date</label>
+                <input 
+                  type="date" 
+                  name="closing_date"
+                  value={formData.closing_date}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                  disabled={modalLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={modalLoading}
+                >
+                  {modalLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>)}
     </div>
   );
 }

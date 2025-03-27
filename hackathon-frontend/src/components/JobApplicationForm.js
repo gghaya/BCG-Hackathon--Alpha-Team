@@ -49,7 +49,7 @@ export default function JobApplicationForm() {
       for (let [key, value] of formData.entries()) {
         console.log(key, value);
       }
-      const response = await fetch("http://127.0.0.1:5000/apply", {
+      const response = await fetch("http://127.0.0.1:5000/api/apply", {
         method: "POST",
         body: formData,
       });
