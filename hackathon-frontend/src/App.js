@@ -14,7 +14,20 @@ import Dashboard from "./components/Dashboard";
 // Layout component with sidebar and navbar
 const DashboardLayout = ({ children }) => (
   <>
-    {/* <Navbar /> */}
+    <Navbar />
+    <div className="flex flex-1">
+      <SideBar />
+      <div className="w-full pl-[20%] pt-16">
+        {children}
+      </div>
+    </div>
+  </>
+);
+
+// Demo layout without authentication
+const DemoLayout = ({ children }) => (
+  <>
+    <Navbar />
     <div className="flex flex-1">
       <SideBar />
       <div className="w-full pl-[20%] pt-16">
@@ -41,6 +54,35 @@ function App() {
             />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* Demo routes - no authentication required */}
+            <Route path="/demo">
+              <Route index element={<Navigate to="/demo/dashboard" replace />} />
+              <Route
+                path="dashboard"
+                element={
+                  <DemoLayout>
+                    <Dashboard />
+                  </DemoLayout>
+                }
+              />
+              <Route
+                path="jobs"
+                element={
+                  <DemoLayout>
+                    <JobListingTable />
+                  </DemoLayout>
+                }
+              />
+              <Route
+                path="applicants"
+                element={
+                  <DemoLayout>
+                    <ApplicantListing />
+                  </DemoLayout>
+                }
+              />
+            </Route>
 
             {/* Protected routes - require authentication */}
             <Route element={<ProtectedRoute recruiterOnly={true} />}>
@@ -90,11 +132,11 @@ function App() {
               <Route
                 path="/applicants"
                 element={
-                  // <DashboardLayout>
+                  <DashboardLayout>
                     <div className="flex-1 flex justify-center items-center">
                       <h1 className="text-2xl">Applicants Management</h1>
                     </div>
-                  // </DashboardLayout>
+                  </DashboardLayout>
                 }
               />
             </Route>

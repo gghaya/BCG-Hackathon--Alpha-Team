@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="white"/>
+  <path d="M100 150 H300 V200 H100 V150 Z" fill="#000000"/>
+  <path d="M100 225 H300 V275 H100 V225 Z" fill="#000000"/>
+  <path d="M100 300 H300 V350 H100 V300 Z" fill="#000000"/>
+  <path d="M350 150 L450 350 M450 150 L350 350" stroke="#00FFAA" stroke-width="50" stroke-linecap="round"/>
+</svg> 
