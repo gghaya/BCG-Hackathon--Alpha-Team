@@ -123,7 +123,7 @@ export default function SideBar() {
             </Link>
             
             <Link
-              to="/applicants"
+              to="/applicant"
               onMouseEnter={() => setHoveredItem('applicants')}
               onMouseLeave={() => setHoveredItem(null)}
               className={`group flex items-center px-4 py-3 text-base font-medium rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-[0_0_20px_rgba(0,255,170,0.15)] ${

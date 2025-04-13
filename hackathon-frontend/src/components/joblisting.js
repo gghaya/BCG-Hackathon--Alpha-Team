@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { format } from 'date-fns';
 import authService from '../services/authService';
-import { FaSearch, FaEdit, FaTrash, FaPlus, FaFilter, FaBriefcase, FaMapMarkerAlt, FaBuilding, FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { IoClose } from 'react-icons/io5';
-import { useLocation } from 'react-router-dom';
 
 export default function JobListingTable() {
-  const location = useLocation();
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   
-  const [filter, setFilter] = useState({
-    search:"",
-    status: '',
-  });
   // Form state for adding new job
   const [formData, setFormData] = useState({
     job_title: '',
-    department: '',
-    location: '',
-    job_type: '',
     description: '',
     requirements: '',
+    responsibilities: [],
+    skills: [],
+    education: '',
+    skills_priority: 'medium',
+    requirements_priority: 'medium',
+    education_priority: 'medium',
     closing_date: '',
     number_of_positions: 1,
     reference_number: ''
@@ -37,166 +30,6 @@ export default function JobListingTable() {
   // State for skill input
   const [newSkill, setNewSkill] = useState('');
   const [newResponsibility, setNewResponsibility] = useState('');
-
-  // Check if we're in demo mode
-  useEffect(() => {
-    setIsDemoMode(location.pathname.startsWith('/demo'));
-  }, [location]);
-
-  // Fetch jobs data
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        setLoading(true);
-        
-        if (isDemoMode) {
-          // Use mock data for demo mode
-          setTimeout(() => {
-            setJobListings([
-              {
-                id: 1,
-                job_title: 'Senior Developer',
-                department: 'Engineering',
-                location: 'New York, NY',
-                job_type: 'Full-time',
-                description: 'We are looking for a senior developer to join our team...',
-                requirements: '5+ years of experience with React, Node.js, and TypeScript...',
-                closing_date: '2023-12-31',
-                status: 'open'
-              },
-              {
-                id: 2,
-                job_title: 'UX Designer',
-                department: 'Design',
-                location: 'San Francisco, CA',
-                job_type: 'Full-time',
-                description: 'Join our design team to create beautiful and intuitive user experiences...',
-                requirements: '3+ years of experience with Figma, Adobe XD, and user research...',
-                closing_date: '2023-12-15',
-                status: 'open'
-              },
-              {
-                id: 3,
-                job_title: 'Product Manager',
-                department: 'Product',
-                location: 'Remote',
-                job_type: 'Full-time',
-                description: 'Lead product development initiatives from conception to launch...',
-                requirements: '4+ years of product management experience, strong analytical skills...',
-                closing_date: '2023-11-30',
-                status: 'closed'
-              },
-              {
-                id: 4,
-                job_title: 'Data Scientist',
-                department: 'Analytics',
-                location: 'Boston, MA',
-                job_type: 'Full-time',
-                description: 'Work with large datasets to extract insights and build predictive models...',
-                requirements: 'PhD in Computer Science, Statistics, or related field, Python, R, SQL...',
-                closing_date: '2023-12-20',
-                status: 'open'
-              },
-              {
-                id: 5,
-                job_title: 'Frontend Developer',
-                department: 'Engineering',
-                location: 'Chicago, IL',
-                job_type: 'Full-time',
-                description: 'Create responsive and interactive user interfaces for our web applications...',
-                requirements: '3+ years of experience with React, JavaScript, HTML, CSS...',
-                closing_date: '2023-12-10',
-                status: 'open'
-              },
-              {
-                id: 6,
-                job_title: 'Full Stack Developer',
-                department: 'Engineering',
-                location: 'Austin, TX',
-                job_type: 'Full-time',
-                description: 'Develop both frontend and backend components of our applications...',
-                requirements: '4+ years of experience with React, Node.js, MongoDB, AWS...',
-                closing_date: '2023-11-15',
-                status: 'closed'
-              },
-              {
-                id: 7,
-                job_title: 'DevOps Engineer',
-                department: 'Operations',
-                location: 'Seattle, WA',
-                job_type: 'Full-time',
-                description: 'Build and maintain our CI/CD pipelines and cloud infrastructure...',
-                requirements: '3+ years of experience with Docker, Kubernetes, AWS, Terraform...',
-                closing_date: '2023-12-25',
-                status: 'open'
-              },
-              {
-                id: 8,
-                job_title: 'UI Designer',
-                department: 'Design',
-                location: 'Los Angeles, CA',
-                job_type: 'Full-time',
-                description: 'Create visually stunning interfaces for our digital products...',
-                requirements: '3+ years of experience with Figma, Adobe Creative Suite, UI design...',
-                closing_date: '2023-12-05',
-                status: 'open'
-              },
-              {
-                id: 9,
-                job_title: 'Backend Developer',
-                department: 'Engineering',
-                location: 'Denver, CO',
-                job_type: 'Full-time',
-                description: 'Design and implement scalable backend services and APIs...',
-                requirements: '4+ years of experience with Node.js, Python, PostgreSQL, Redis...',
-                closing_date: '2023-11-20',
-                status: 'closed'
-              },
-              {
-                id: 10,
-                job_title: 'QA Engineer',
-                department: 'Quality Assurance',
-                location: 'Portland, OR',
-                job_type: 'Full-time',
-                description: 'Ensure the quality of our products through comprehensive testing...',
-                requirements: '3+ years of experience with automated testing, Selenium, Jest...',
-                closing_date: '2023-12-18',
-                status: 'open'
-              }
-            ]);
-            setLoading(false);
-          }, 1000); // Simulate loading delay
-        } else {
-          // In a real app, we would fetch data from the API
-          try {
-            const response = await fetch('http://localhost:5000/api/job_offers', {
-              headers: {
-                ...authService.authHeader()
-              }
-            });
-            
-            if (!response.ok) {
-              throw new Error('Failed to fetch job listings');
-            }
-            
-            const data = await response.json();
-            setJobListings(data);
-          } catch (err) {
-            setError(err.message);
-            console.error('Error fetching jobs:', err);
-          } finally {
-            setLoading(false);
-          }
-        }
-      } catch (err) {
-        setError("Error loading jobs: " + err.message);
-        console.error(err);
-        setLoading(false);
-      }
-    };
-    
-    fetchJobs();
-  }, [isDemoMode]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -249,6 +82,34 @@ export default function JobListingTable() {
     });
   };
 
+  // Fetch job listings
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/job_offers', {
+          headers: {
+            ...authService.authHeader()
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch job listings');
+        }
+        
+        const data = await response.json();
+        setJobListings(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchJobs();
+  }, []);
+
   // Handle job creation
   const handleCreateJob = async (e) => {
     e.preventDefault();
@@ -276,11 +137,14 @@ export default function JobListingTable() {
       // Reset form and close modal
       setFormData({
         job_title: '',
-        department: '',
-        location: '',
-        job_type: '',
         description: '',
         requirements: '',
+        responsibilities: [],
+        skills: [],
+        education: '',
+        skills_priority: 'medium',
+        requirements_priority: 'medium',
+        education_priority: 'medium',
         closing_date: '',
         number_of_positions: 1,
         reference_number: ''
@@ -299,11 +163,14 @@ export default function JobListingTable() {
     setEditingJob(job);
     setFormData({
       job_title: job.job_title,
-      department: job.department,
-      location: job.location,
-      job_type: job.job_type,
       description: job.description,
       requirements: job.requirements || '',
+      responsibilities: job.responsibilities || [],
+      skills: job.skills || [],
+      education: job.education || '',
+      skills_priority: job.skills_priority || 'medium',
+      requirements_priority: job.requirements_priority || 'medium',
+      education_priority: job.education_priority || 'medium',
       closing_date: job.closing_date || '',
       number_of_positions: job.number_of_positions || 1,
       reference_number: job.reference_number || ''
@@ -344,11 +211,14 @@ export default function JobListingTable() {
       // Reset form
       setFormData({
         job_title: '',
-        department: '',
-        location: '',
-        job_type: '',
         description: '',
         requirements: '',
+        responsibilities: [],
+        skills: [],
+        education: '',
+        skills_priority: 'medium',
+        requirements_priority: 'medium',
+        education_priority: 'medium',
         closing_date: '',
         number_of_positions: 1,
         reference_number: ''
@@ -417,375 +287,591 @@ export default function JobListingTable() {
     }
     return options;
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilter({
-      ...filter,
-      [name]: value
-    });
-  };
-
-  const applyFilter = () => {
-    return jobListings.filter((job) => {
-      const matchesStatus = filter.status === '' || job.status === filter.status;
-      const matchesSearch = filter.search === '' || 
-        job.job_title.toLowerCase().includes(filter.search.toLowerCase()) ||
-        job.department.toLowerCase().includes(filter.search.toLowerCase()) ||
-        job.location.toLowerCase().includes(filter.search.toLowerCase());
-      
-      return matchesStatus && matchesSearch;
-    });
-  };
-
-  const filteredJobs = applyFilter();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
+  
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Job Listings</h1>
-        <button
-          onClick={() => setShowJobModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <FaPlus className="mr-2" />
-          Add New Job
-        </button>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Job Listings</h2>
+        <div className="flex gap-2">
+          <button onClick={() => setShowJobModal(true)} className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600">
+            + Add Job Listing
+          </button>
+        </div>
       </div>
 
-      {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-          {error}
+      {loading ? (
+        <div className="text-center py-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2">Loading job listings...</p>
         </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                name="search"
-                value={filter.search}
-                onChange={handleFilterChange}
-                placeholder="Search jobs..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setShowFilter(!showFilter)}
-              className={`flex items-center gap-2 ${
-                showFilter 
-                  ? "bg-blue-600 text-white" 
-                  : "bg-white text-gray-600"
-              } px-3 py-1 border border-gray-300 rounded hover:bg-blue-600 hover:text-white transition-colors text-sm`}
-            >
-              <FaFilter className="text-xs" />
-              Filter
-            </button>
-          </div>
+      ) : error ? (
+        <div className="bg-red-100 text-red-700 p-3 rounded">
+          Error: {error}
         </div>
-
-        {/* Filter Section */}
-        {showFilter && (
-          <div className="mt-4 p-4 border border-gray-200 rounded-md">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-medium text-gray-700">Filter Options</h3>
-              <button 
-                onClick={() => setShowFilter(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <IoClose size={20} />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={filter.status}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All</option>
-                  <option value="open">Open</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      ) : (
+        <div className="overflow-x-auto rounded border border-gray-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-indigo-100 text-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaBriefcase className="mr-2 text-blue-500" />
-                    Job Title
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaBuilding className="mr-2 text-gray-500" />
-                    Department
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaMapMarkerAlt className="mr-2 text-gray-500" />
-                    Location
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaBriefcase className="mr-2 text-gray-500" />
-                    Type
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaClock className="mr-2 text-gray-500" />
-                    Closing Date
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center">
-                    <FaCheckCircle className="mr-2 text-gray-500" />
-                    Status
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="p-3 text-left">Job Title</th>
+                <th className="p-3 text-left">Reference #</th>
+                <th className="p-3 text-left">Skills</th>
+                <th className="p-3 text-left">Publish Date</th>
+                <th className="p-3 text-left">Closing Date</th>
+                <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{job.job_title}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
-                      {job.department}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
-                      {job.location}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
-                      {job.job_type}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
-                      {job.closing_date ? new Date(job.closing_date).toLocaleDateString() : 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      job.status === 'open' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {job.status === 'open' ? (
-                        <span className="flex items-center">
-                          <FaCheckCircle className="mr-1" /> Open
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <FaTimesCircle className="mr-1" /> Closed
-                        </span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={() => handleEditJob(job)}
-                        className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                      >
-                        <FaEdit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteJob(job.id)}
-                        className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                      >
-                        <FaTrash className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredJobs.length === 0 && (
+            <tbody className="bg-white">
+              {jobListings.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center">
-                    <div className="flex flex-col items-center justify-center text-gray-500">
-                      <FaSearch className="w-12 h-12 mb-3 text-gray-400" />
-                      <p className="text-lg">No jobs found matching your criteria.</p>
-                    </div>
+                  <td colSpan="6" className="p-3 text-center text-gray-500">
+                    No job listings found. Add your first job listing!
                   </td>
                 </tr>
+              ) : (
+                jobListings.map((job) => (
+                  <tr key={job.id} className="border-t hover:bg-gray-50">
+                    <td className="p-3 font-medium text-blue-600 hover:underline cursor-pointer">
+                      {job.job_title}
+                    </td>
+                    <td className="p-3">{job.reference_number || '-'}</td>
+                    <td className="p-3">
+                      {job.skills ? (
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(job.skills) && job.skills.slice(0, 3).map((skill, idx) => (
+                            <span key={idx} className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {Array.isArray(job.skills) && job.skills.length > 3 && (
+                            <span className="text-gray-500 text-xs">+{job.skills.length - 3} more</span>
+                          )}
+                        </div>
+                      ) : "-"}
+                    </td>
+                    <td className="p-3">
+                      {job.publish_date ? format(new Date(job.publish_date), 'yyyy-MM-dd') : '-'}
+                    </td>
+                    <td className="p-3">
+                      {job.closing_date ? format(new Date(job.closing_date), 'yyyy-MM-dd') : '-'}
+                    </td>
+                    <td className="p-3 text-center space-x-2">
+                      <button 
+                        className="text-green-500 hover:text-green-700"
+                        onClick={() => handleScoreAllCandidates(job.id)}
+                        title="Score all candidates"
+                      >
+                        📊
+                      </button>
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => handleEditJob(job)}
+                        title="Edit job"
+                      >
+                        ✎
+                      </button>
+                      <button 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDeleteJob(job.id)}
+                        title="Delete job"
+                      >
+                        🗑
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
 
-      {/* Job Modal */}
+      {/* Job Add Modal */}
       {showJobModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {editingJob ? 'Edit Job' : 'Add New Job'}
-                </h2>
+          <div className="bg-white rounded shadow-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-center">Add Job Listing</h3>
+              <p className="text-gray-600 text-sm mt-2 text-center">
+                Fill in the job details below and save to add the job listing.
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleCreateJob}>
+              {/* Basic Job Information */}
+              <div>
+                <label className="text-sm font-medium">Job Title*</label>
+                <input 
+                  type="text" 
+                  name="job_title"
+                  value={formData.job_title}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Job Description*</label>
+                <textarea 
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={4}
+                  required
+                ></textarea>
+              </div>
+              
+              {/* Requirements */}
+              <div>
+                <label className="text-sm font-medium">Requirements</label>
+                <textarea 
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={3}
+                  placeholder="List job requirements here..."
+                ></textarea>
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="requirements_priority"
+                    value={formData.requirements_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Responsibilities */}
+              <div>
+                <label className="text-sm font-medium">Responsibilities</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newResponsibility}
+                    onChange={(e) => setNewResponsibility(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a responsibility"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddResponsibility}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.responsibilities.length > 0 && (
+                  <ul className="mt-2 space-y-1 pl-5 list-disc">
+                    {formData.responsibilities.map((resp, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{resp}</span>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveResponsibility(index)}
+                          className="text-red-500 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              
+              {/* Skills */}
+              <div>
+                <label className="text-sm font-medium">Skills</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a skill"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddSkill}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.skills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center"
+                      >
+                        {skill}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveSkill(index)}
+                          className="ml-1 text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="skills_priority"
+                    value={formData.skills_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Education */}
+              <div>
+                <label className="text-sm font-medium">Education Requirements</label>
+                <input 
+                  type="text" 
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1"
+                  placeholder="e.g., Bachelor's degree in Computer Science"
+                />
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="education_priority"
+                    value={formData.education_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Additional Job Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Reference Number</label>
+                  <input 
+                    type="text" 
+                    name="reference_number"
+                    value={formData.reference_number}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Number of Positions</label>
+                  <input 
+                    type="number" 
+                    name="number_of_positions"
+                    value={formData.number_of_positions}
+                    onChange={handleInputChange}
+                    min="1"
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Closing Date</label>
+                <input 
+                  type="date" 
+                  name="closing_date"
+                  value={formData.closing_date}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
                 <button
+                  type="button"
                   onClick={() => setShowJobModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                  disabled={modalLoading}
                 >
-                  <IoClose size={24} />
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={modalLoading}
+                >
+                  {modalLoading ? 'Saving...' : 'Save'}
                 </button>
               </div>
-              <form onSubmit={editingJob ? handleUpdateJob : handleCreateJob}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Job Title
-                    </label>
-                    <input
-                      type="text"
-                      name="job_title"
-                      value={formData.job_title}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Department
-                    </label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Job Type
-                    </label>
-                    <select
-                      name="job_type"
-                      value={formData.job_type}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select Job Type</option>
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Closing Date
-                    </label>
-                    <input
-                      type="date"
-                      name="closing_date"
-                      value={formData.closing_date}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows="4"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  ></textarea>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Requirements
-                  </label>
-                  <textarea
-                    name="requirements"
-                    value={formData.requirements}
-                    onChange={handleInputChange}
-                    rows="4"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  ></textarea>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowJobModal(false)}
-                    className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    {editingJob ? 'Update Job' : 'Create Job'}
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
         </div>
       )}
+
+      {/* Job Edit Modal */}
+      {showEditModal && editingJob && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-center">Edit Job Listing</h3>
+              <p className="text-gray-600 text-sm mt-2 text-center">
+                Update the job details below.
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleUpdateJob}>
+              {/* Basic Job Information */}
+              <div>
+                <label className="text-sm font-medium">Job Title*</label>
+                <input 
+                  type="text" 
+                  name="job_title"
+                  value={formData.job_title}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Job Description*</label>
+                <textarea 
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={4}
+                  required
+                ></textarea>
+              </div>
+              
+              {/* Requirements */}
+              <div>
+                <label className="text-sm font-medium">Requirements</label>
+                <textarea 
+                  name="requirements"
+                  value={formData.requirements}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                  rows={3}
+                  placeholder="List job requirements here..."
+                ></textarea>
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="requirements_priority"
+                    value={formData.requirements_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Responsibilities */}
+              <div>
+                <label className="text-sm font-medium">Responsibilities</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newResponsibility}
+                    onChange={(e) => setNewResponsibility(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a responsibility"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddResponsibility}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.responsibilities.length > 0 && (
+                  <ul className="mt-2 space-y-1 pl-5 list-disc">
+                    {formData.responsibilities.map((resp, index) => (
+                      <li key={index} className="flex justify-between">
+                        <span>{resp}</span>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveResponsibility(index)}
+                          className="text-red-500 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              
+              {/* Skills */}
+              <div>
+                <label className="text-sm font-medium">Skills</label>
+                <div className="flex mt-1 mb-2">
+                  <input 
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    className="w-full rounded-l-md border p-2"
+                    placeholder="Add a skill"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddSkill}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-r-md"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.skills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center"
+                      >
+                        {skill}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveSkill(index)}
+                          className="ml-1 text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="skills_priority"
+                    value={formData.skills_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Education */}
+              <div>
+                <label className="text-sm font-medium">Education Requirements</label>
+                <input 
+                  type="text" 
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1"
+                  placeholder="e.g., Bachelor's degree in Computer Science"
+                />
+                <div className="mt-1 flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Priority:</span>
+                  <select 
+                    name="education_priority"
+                    value={formData.education_priority}
+                    onChange={handleInputChange}
+                    className="text-sm border-gray-300 rounded"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Additional Job Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Reference Number</label>
+                  <input 
+                    type="text" 
+                    name="reference_number"
+                    value={formData.reference_number}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Number of Positions</label>
+                  <input 
+                    type="number" 
+                    name="number_of_positions"
+                    value={formData.number_of_positions}
+                    onChange={handleInputChange}
+                    min="1"
+                    className="w-full border p-2 rounded mt-1" 
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Closing Date</label>
+                <input 
+                  type="date" 
+                  name="closing_date"
+                  value={formData.closing_date}
+                  onChange={handleInputChange}
+                  className="w-full border p-2 rounded mt-1" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                  disabled={modalLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={modalLoading}
+                >
+                  {modalLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>)}
     </div>
   );
 }

@@ -75,7 +75,7 @@ function App() {
                 }
               />
               <Route
-                path="applicants"
+                path="applicant"
                 element={
                   <DemoLayout>
                     <ApplicantListing />

@@ -25,8 +25,8 @@ services:
   #     - POSTGRES_USER=user
   #     - POSTGRES_PASSWORD=password
   #     - POSTGRES_HOST=db
-  #     - POSTGRES_DB=resume_db
-  #     - DATABASE_URL=postgresql://user:password@db:5432/resume_db
+  #     - POSTGRES_DB=resume
+  #     - DATABASE_URL=postgresql://user:password@localhost:5432/resume
   #     - GOOGLE_API_KEY=AIzaSyD_jqJEPv2lbZHcFNjuRbLG070vzrWPh_s
   #     - JWT_SECRET_KEY=9d61b5f2c8a7e4b3d6a9c0f8e7d2b5a8c1f9d7e4b2a5c8f3d6e9b2a5c7f1d8e3
   #   depends_on:

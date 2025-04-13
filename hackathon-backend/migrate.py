@@ -4,7 +4,7 @@ import os
 print("Starting database migration...")
 
 # Make sure SQLAlchemy has correct DB connection
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@db:5432/resume_db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/resume')
 
 # Initialize DB with app
 from models import db

@@ -25,7 +25,7 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"])
 
 # Configure database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@db:5432/resume_db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/resume')
 db.init_app(app)
 # print("00000000000000000000000")
 # Create tables
@@ -184,6 +184,7 @@ def login():
         }
     }), 200
 
+
 # Public routes for applicants
 @app.route("/api/apply", methods=["POST"])
 def upload_resume_route():
@@ -294,17 +295,17 @@ def get_job_offers_route():
             "responsibilities": offer.responsibilities,
             "skills": offer.skills,
             "education": offer.education,
-            "skills_priority": offer.skills_priority.value if offer.skills_priority else "medium",
-            "requirements_priority": offer.requirements_priority.value if offer.requirements_priority else "medium",
-            "education_priority": offer.education_priority.value if offer.education_priority else "medium"
+            "skills_priority": offer.skills_priority,
+            "requirements_priority": offer.requirements_priority,
+            "education_priority": offer.education_priority,
         } for offer in job_offers_list])
     except Exception as e:
         print(f"Error fetching job offers: {e}")
         return jsonify({"error": "Failed to fetch job offers"}), 500
 
 @app.route("/api/job_offers", methods=["POST"])
-@token_required
-@recruiter_required
+# @token_required
+#@recruiter_required
 def create_job_offer():
     """Create a new job offer with structured fields and priority weights."""
     data = request.get_json()
@@ -338,7 +339,7 @@ def create_job_offer():
     new_job = job_offers(
         job_title=data['job_title'],
         description=data['description'],
-        created_by=request.current_user.id,
+        created_by=1,
         closing_date=closing_date,
         number_of_positions=data.get('number_of_positions', 1),
         publish_date=date.today(),
@@ -371,14 +372,14 @@ def create_job_offer():
         "responsibilities": new_job.responsibilities,
         "skills": new_job.skills,
         "education": new_job.education,
-        "skills_priority": new_job.skills_priority.value if new_job.skills_priority else None,
-        "requirements_priority": new_job.requirements_priority.value if new_job.requirements_priority else None,
-        "education_priority": new_job.education_priority.value if new_job.education_priority else None
+        "skills_priority": new_job.skills_priority,
+        "requirements_priority": new_job.requirements_priority,
+        "education_priority": new_job.education_priority
     }), 201
 
 @app.route("/api/job_offers/<int:job_id>", methods=["PUT"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def update_job_offer(job_id):
     """Update an existing job offer."""
     job = job_offers.query.get(job_id)
@@ -450,8 +451,8 @@ def update_job_offer(job_id):
     }), 200
 
 @app.route("/api/job_offers/<int:job_id>", methods=["DELETE"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def delete_job_offer(job_id):
     """Delete a job offer."""
     job = job_offers.query.get(job_id)
@@ -465,8 +466,8 @@ def delete_job_offer(job_id):
     return jsonify({"message": "Job offer deleted successfully"}), 200
 
 @app.route("/api/score_candidate", methods=["POST"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def score_candidate():
     """Score a candidate against a job posting."""
     data = request.get_json()
@@ -519,8 +520,8 @@ def score_candidate():
         return jsonify({"error": "Failed to calculate score"}), 500
 
 @app.route("/api/score_all_candidates/<int:job_id>", methods=["POST"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def score_all_candidates(job_id):
     """Score all candidates for a specific job."""
     try:
@@ -588,8 +589,8 @@ def score_all_candidates(job_id):
         return jsonify({"error": "Failed to calculate scores"}), 500
 
 @app.route("/api/applicants", methods=["GET"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def get_applicants():
     """Get all applicants with optional filtering and detailed scoring."""
     try:
@@ -653,8 +654,8 @@ def get_applicants():
         return jsonify({"error": "Failed to fetch applicants"}), 500
 
 @app.route("/api/applicants/<int:applicant_id>", methods=["GET"])
-@token_required
-@recruiter_required
+#@token_required
+#@recruiter_required
 def get_applicant(applicant_id):
     """Get a specific applicant's details."""
     applicant = candidates.query.get(applicant_id)

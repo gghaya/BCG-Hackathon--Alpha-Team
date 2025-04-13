@@ -54,9 +54,9 @@ class job_offers(db.Model):
     education = db.Column(db.String(255), nullable=True)
     
     # Priority weights for scoring
-    skills_priority = db.Column(db.Enum(PriorityLevel), nullable=True, default=PriorityLevel.MEDIUM)
-    requirements_priority = db.Column(db.Enum(PriorityLevel), nullable=True, default=PriorityLevel.MEDIUM)
-    education_priority = db.Column(db.Enum(PriorityLevel), nullable=True, default=PriorityLevel.MEDIUM)
+    skills_priority = db.Column(db.String(100), nullable=True)
+    requirements_priority = db.Column(db.String(100), nullable=True)
+    education_priority = db.Column(db.String(100), nullable=True)
     
     # Original fields
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
